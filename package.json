@@ -15,10 +15,12 @@
     "react-dom": "^19.0.0",
     "react-icons": "^5.4.0",
     "uuid": "^11.0.4",
-    "yt-dlp-exec": "^1.0.2"
+    "yt-dlp-exec": "^1.0.2",
+    "ytdl-core": "^4.11.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@types/fluent-ffmpeg": "^2.1.27",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

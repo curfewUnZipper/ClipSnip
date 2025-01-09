@@ -1,9 +1,8 @@
 import path from "path";
 import fs from "fs";
 import { NextResponse } from "next/server";
-import ytdlp from "yt-dlp-exec"; // yt-dlp-exec package
-import { exec } from "child_process";
-import { promisify } from "util";
+import ytdl from "ytdl-core";
+import ffmpeg from "fluent-ffmpeg";
 
 const clipsDirectory = path.join(process.cwd(), "public", "downloads");
 
@@ -21,32 +20,36 @@ export async function POST(req: Request) {
     );
   }
 
-  const videoId = new URL(youtubeLink).searchParams.get("v");
-  if (!videoId) {
-    return NextResponse.json(
-      { error: "Invalid YouTube link" },
-      { status: 400 }
-    );
-  }
-
-  const videoPath = path.join(clipsDirectory, `${videoId}.mp4`);
-  const clipPath = path.join(
-    clipsDirectory,
-    `${videoId}_clip_${startTime.replace(/:/g, "-")}_${duration}.mp4`
-  );
-
   try {
-    // Download video using yt-dlp-exec
-    await ytdlp(youtubeLink, {
-      output: videoPath,
-      format: "best",
+    const videoId = ytdl.getURLVideoID(youtubeLink);
+    const videoPath = path.join(clipsDirectory, `${videoId}.mp4`);
+    const clipPath = path.join(
+      clipsDirectory,
+      `${videoId}_clip_${startTime.replace(/:/g, "-")}_${duration}.mp4`
+    );
+
+    // Download the video using ytdl-core
+    const videoStream = ytdl(youtubeLink, { quality: "highestvideo" });
+    const videoFile = fs.createWriteStream(videoPath);
+
+    await new Promise((resolve, reject) => {
+      videoStream.pipe(videoFile);
+      videoStream.on("end", resolve);
+      videoStream.on("error", reject);
     });
 
-    // Extract the clip using ffmpeg
-    await promisify(exec)(
-      `ffmpeg -ss ${startTime} -i "${videoPath}" -t ${duration} -c:v libx264 -preset ultrafast -crf 23 -c:a aac -strict experimental -y "${clipPath}"`
-    );
+    // Extract the clip using fluent-ffmpeg
+    await new Promise((resolve, reject) => {
+      ffmpeg(videoPath)
+        .setStartTime(startTime)
+        .setDuration(duration)
+        .output(clipPath)
+        .on("end", resolve)
+        .on("error", reject)
+        .run();
+    });
 
+    // Return the clip URL
     return NextResponse.json({
       message: "Clip generated successfully",
       clipUrl: `/downloads/${path.basename(clipPath)}`,
@@ -57,12 +60,5 @@ export async function POST(req: Request) {
       { error: "Failed to process the video" },
       { status: 500 }
     );
-  } finally {
-    // Clean up the temporary video file
-    if (fs.existsSync(videoPath)) {
-      fs.unlink(videoPath, (err) => {
-        if (err) console.error("Error cleaning up video file:", err);
-      });
-    }
   }
 }
