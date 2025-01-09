@@ -1,12 +1,13 @@
 import path from "path";
-import { exec } from "child_process";
-import { promisify } from "util";
 import fs from "fs";
 import { NextResponse } from "next/server";
+import ytdlp from "yt-dlp-exec"; // Use yt-dlp-exec package
+import { exec } from "child_process";
+import { promisify } from "util";
 
 const clipsDirectory = path.join(process.cwd(), "public", "downloads");
 
-// Ensure the `downloads` directory exists
+// Ensure the downloads directory exists
 if (!fs.existsSync(clipsDirectory)) {
   fs.mkdirSync(clipsDirectory, { recursive: true });
 }
@@ -44,16 +45,16 @@ export async function POST(req: Request) {
   }
 
   try {
-    // Use absolute path for yt-dlp
-    const ytdlpPath = "/usr/local/bin/yt-dlp";
+    // Download the video using yt-dlp-exec
+    await ytdlp(youtubeLink, {
+      output: videoPath,
+      format: "best",
+    });
 
-    // Step 1: Download the video
-    const downloadCommand = `${ytdlpPath} "${youtubeLink}" --output "${videoPath}" --format best`;
-    await promisify(exec)(downloadCommand);
-
-    // Step 2: Extract the clip using ffmpeg
-    const ffmpegCommand = `ffmpeg -ss ${startTime} -i "${videoPath}" -t ${duration} -c:v libx264 -preset ultrafast -crf 23 -c:a aac -strict experimental -y "${clipPath}"`;
-    await promisify(exec)(ffmpegCommand);
+    // Extract the clip from the downloaded video
+    await promisify(exec)(
+      `ffmpeg -ss ${startTime} -i "${videoPath}" -t ${duration} -c:v libx264 -preset ultrafast -crf 23 -c:a aac -strict experimental -y "${clipPath}"`
+    );
 
     return NextResponse.json({
       message: "Clip generated successfully",
@@ -63,11 +64,11 @@ export async function POST(req: Request) {
     console.error("Error generating clip:", error);
 
     return NextResponse.json(
-      { error: "Failed to generate the clip. Check logs for details." },
+      { error: "Failed to process the video" },
       { status: 500 }
     );
   } finally {
-    // Clean up temporary video file
+    // Clean up the temporary video file
     if (fs.existsSync(videoPath)) {
       fs.unlink(videoPath, (err) => {
         if (err) console.error("Error cleaning up video file:", err);
