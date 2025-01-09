@@ -1,13 +1,12 @@
 import path from "path";
 import fs from "fs";
 import { NextResponse } from "next/server";
-import ytdlp from "yt-dlp-exec"; // Use yt-dlp-exec package
+import ytdlp from "yt-dlp-exec"; // yt-dlp-exec package
 import { exec } from "child_process";
 import { promisify } from "util";
 
 const clipsDirectory = path.join(process.cwd(), "public", "downloads");
 
-// Ensure the downloads directory exists
 if (!fs.existsSync(clipsDirectory)) {
   fs.mkdirSync(clipsDirectory, { recursive: true });
 }
@@ -36,22 +35,14 @@ export async function POST(req: Request) {
     `${videoId}_clip_${startTime.replace(/:/g, "-")}_${duration}.mp4`
   );
 
-  // Check if the clip already exists
-  if (fs.existsSync(clipPath)) {
-    return NextResponse.json({
-      message: "Clip already exists",
-      clipUrl: `/downloads/${path.basename(clipPath)}`,
-    });
-  }
-
   try {
-    // Download the video using yt-dlp-exec
+    // Download video using yt-dlp-exec
     await ytdlp(youtubeLink, {
       output: videoPath,
       format: "best",
     });
 
-    // Extract the clip from the downloaded video
+    // Extract the clip using ffmpeg
     await promisify(exec)(
       `ffmpeg -ss ${startTime} -i "${videoPath}" -t ${duration} -c:v libx264 -preset ultrafast -crf 23 -c:a aac -strict experimental -y "${clipPath}"`
     );
@@ -62,7 +53,6 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error("Error generating clip:", error);
-
     return NextResponse.json(
       { error: "Failed to process the video" },
       { status: 500 }
