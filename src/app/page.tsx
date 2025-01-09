@@ -58,12 +58,15 @@ export default function Home() {
     startSubtitleLoop();
 
     try {
-      const response = await fetch("/api/generate-clip", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ youtubeLink, startTime, duration }),
-        signal: abortController.signal,
-      });
+      const response = await fetch(
+        "https://clipsnip.onrender.com/api/generate-clip",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ youtubeLink, startTime, duration }),
+          signal: abortController.signal,
+        }
+      );
 
       setProgress(70);
 
@@ -161,7 +164,6 @@ export default function Home() {
                 <>
                   Generating...
                   <IoSparkles className="animate-spin" />{" "}
-                  {/* Add spinning animation */}
                 </>
               ) : (
                 <>
