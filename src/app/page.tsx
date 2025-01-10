@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useRef, useEffect } from "react";
 import { IoSparkles } from "react-icons/io5";
 
@@ -11,10 +10,8 @@ export default function Home() {
   const [progress, setProgress] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(false);
   const [subtitle, setSubtitle] = useState<string>("");
-
   const abortControllerRef = useRef<AbortController | null>(null);
   const subtitleIntervalRef = useRef<NodeJS.Timeout | null>(null);
-
   // Messages to display under the processing bar
   const loadingMessages = [
     "Wait, it's loading...",
@@ -29,7 +26,6 @@ export default function Home() {
     "Almost broke the code",
     "Let me cook again hard",
   ];
-
   useEffect(() => {
     // Delete clips on page load
     const deleteClipsOnReload = async () => {
@@ -40,36 +36,26 @@ export default function Home() {
         console.error("Failed to delete clips:", error);
       }
     };
-
     deleteClipsOnReload();
   }, []);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setProgress(10);
     setSubtitle("Initializing...");
-
     // Create a new AbortController for this request
     const abortController = new AbortController();
     abortControllerRef.current = abortController;
-
     // Start cycling through subtitles
     startSubtitleLoop();
-
     try {
-      const response = await fetch(
-        "https://clipsnip.onrender.com/api/generate-clip",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ youtubeLink, startTime, duration }),
-          signal: abortController.signal,
-        }
-      );
-
+      const response = await fetch("/api/generate-clip", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ youtubeLink, startTime, duration }),
+        signal: abortController.signal,
+      });
       setProgress(70);
-
       const data = await response.json();
       if (data.clipUrl) {
         setClipUrl(data.clipUrl);
@@ -93,7 +79,6 @@ export default function Home() {
       stopSubtitleLoop();
     }
   };
-
   const handleCancel = () => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -103,7 +88,6 @@ export default function Home() {
     setSubtitle("Cancelled by user.");
     stopSubtitleLoop();
   };
-
   const startSubtitleLoop = () => {
     let index = 0;
     subtitleIntervalRef.current = setInterval(() => {
@@ -111,14 +95,12 @@ export default function Home() {
       index = (index + 1) % loadingMessages.length; // Cycle through messages
     }, 5000);
   };
-
   const stopSubtitleLoop = () => {
     if (subtitleIntervalRef.current) {
       clearInterval(subtitleIntervalRef.current);
       subtitleIntervalRef.current = null;
     }
   };
-
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center px-4">
       <div className="bg-white shadow-md rounded-lg p-6 w-full max-w-md">
@@ -164,6 +146,7 @@ export default function Home() {
                 <>
                   Generating...
                   <IoSparkles className="animate-spin" />{" "}
+                  {/* Add spinning animation */}
                 </>
               ) : (
                 <>
