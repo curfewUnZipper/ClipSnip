@@ -6,9 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "postinstall": "pip install yt-dlp"
-  },
+    "lint": "next lint"
+    },
   "dependencies": {
     "fluent-ffmpeg": "^2.1.3",
     "next": "15.1.4",
