@@ -6,7 +6,8 @@
     "dev": "cd venv/scripts && activate && cd ../.. && next dev",
     "build": "cd venv/scripts && activate && cd ../.. && next build",
     "start": "cd venv/scripts && activate && cd ../.. && next start",
-    "lint": "cd venv/scripts && activate && cd ../.. && next lint"
+    "lint": "cd venv/scripts && activate && cd ../.. && next lint",
+    "postinstall": "pip install yt-dlp"
   },
   "dependencies": {
     "fluent-ffmpeg": "^2.1.3",
